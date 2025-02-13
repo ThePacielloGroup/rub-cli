@@ -7,6 +7,7 @@ const tasks = require('../globals/tasks')
 const { log, notice } = require('../globals/logger')
 const open = require('open')
 const { URL } = require('url')
+const layouts = require('../globals/layouts')
 
 commands.create({
 
@@ -95,9 +96,36 @@ commands.create({
     this.createListener()
   },
 
+  async writeTmpIndexPage() {
+    let outputPaths;
+    await layouts.load(process.cwd()).then((layout) => {
+      outputPaths = tasks.filterOutputDirs(layout)
+    });
+    let items = Object.keys(outputPaths).filter(item => item !== 'src/course');
+    const buildsPath = path.join(process.cwd(), 'builds')
+    let html = `<!DOCTYPE html>
+    <title>Course Preview index</title>
+    <style>body { font-family: sans-serif; margin: 2em;} li {padding: .5em}</style>
+    <body>
+    <h1>Course Preview index</h1>
+    <ul>
+      ${items.map(item => `<li><a href="${item}/index.html">${item}</a></li>`).join('')}
+    </ul>
+    </body>
+    </html>`;
+    fs.writeFileSync(path.join(buildsPath, 'tmp-index.html'), html);
+  },
+
   listening () {
-    notice('Opening http://localhost:' + this.port + '...')
-    open('http://localhost:' + this.port)
+    let items = commands.get("items");
+    let pathEnd = items.length === 1 ? items[0] + "/index.html": "tmp-index.html";
+    
+    if (!items.length || items.length > 1) {
+      this.writeTmpIndexPage();
+    }
+    let url = `http://localhost:${this.port}/builds/${pathEnd}`;
+    notice('Live preview available at ' + url);
+    open(url)
   },
 
   urlStat (url) {
