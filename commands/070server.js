@@ -8,6 +8,7 @@ const { log, notice } = require('../globals/logger')
 const open = require('open')
 const { URL } = require('url')
 const layouts = require('../globals/layouts')
+const crypto = require('crypto')
 
 commands.create({
 
@@ -113,18 +114,18 @@ commands.create({
     </ul>
     </body>
     </html>`;
-    fs.writeFileSync(path.join(buildsPath, 'tmp-index.html'), html);
+    let hash = crypto.createHash('md5').update(html).digest('hex');
+    let fingerprintedFilename = `tmp-index-${hash}.html`;
+    fs.writeFileSync(path.join(buildsPath, fingerprintedFilename), html);
+    return fingerprintedFilename;
   },
 
-  listening () {
+  async listening () {
     let items = commands.get("items");
-    let pathEnd = items.length === 1 ? items[0] + "/index.html": "tmp-index.html";
-    
-    if (!items.length || items.length > 1) {
-      this.writeTmpIndexPage();
-    }
+    let pathEnd = !items.length || items.length > 1 ? await this.writeTmpIndexPage() : items[0] + "/index.html"
     let url = `http://localhost:${this.port}/builds/${pathEnd}`;
-    notice('Live preview available at ' + url);
+    // add \u200B to force utils.$ to show the line if showStdOut is false
+    console.log(`🌐 Live preview available at ${url}\u200B\n`);
     open(url)
   },
 
