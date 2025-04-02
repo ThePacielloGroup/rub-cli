@@ -125,7 +125,7 @@ commands.create({
     let pathEnd = !items.length || items.length > 1 ? await this.writeTmpIndexPage() : items[0] + "/index.html"
     let url = `http://localhost:${this.port}/builds/${pathEnd}`;
     // add \u200B to force utils.$ to show the line if showStdOut is false
-    console.log(`🌐 Live preview available at ${url}\u200B\n`);
+    console.log(`🌐 Live preview available at ${url} \u200B\n`);
     open(url)
   },
 
